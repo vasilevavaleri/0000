@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Сотрудники</title>
+</head>
+<body>
+<h1>Менеджер сотрудников</h1>
+
+<h2>Добавить нового сотрудника</h2>
+<form action="/employee/add" method="post">
+    <label for="fullName">ФИО:</label>
+    <input type="text" id="fullName" name="fullName" required>
+    <label for="experience">Стаж работы:</label>
+    <input type="number" id="experience" name="experience" required>
+    <label for="dateOfBirth">Дата рождения:</label>
+    <input type="date" id="dateOfBirth" name="dateOfBirth" required>
+    <label for="specialization">Специализация:</label>
+    <input type="text" id="specialization" name="specialization" required>
+    <button type="submit">Добавить</button>
+</form>
+
+<h2>Список сотрудников</h2>
+<ul>
+    <!-- Assume server-side template rendering -->
+    <#list employees as employee>
+    <li>
+        ${employee.fullName} - ${employee.specialization}
+        <form action="/employee/delete/${employee.id}" method="post">
+            <button type="submit">Удалить</button>
+        </form>
+    </li>
+</#list>
+</ul>
+
+<!-- Add Service Form -->
+<h2>Добавить услугу</h2>
+<label for="newServiceName">Название услуги:</label>
+<input type="text" id="newServiceName" placeholder="Название услуги" required>
+<label for="newServiceDescription">Описание услуги:</label>
+<textarea id="newServiceDescription" placeholder="Описание услуги" required></textarea>
+<label for="newServicePrice">Цена:</label>
+<input type="text" id="newServicePrice" placeholder="Цена" required>
+<button onclick="addService()">Добавить</button>
+
+<!-- Service Search and Deletion -->
+<h2>Удалить услугу</h2>
+<label for="deleteServiceSearch">Удалить услугу:</label>
+<input type="text" id="deleteServiceSearch" placeholder="Введите название услуги" required>
+<button onclick="searchAndDeleteService()">Найти и удалить</button>
+
+<!-- Feedback Management -->
+<h2>Feedbacks</h2>
+<div id="feedbackManagement"></div>
+
+<script>
+    // JavaScript functions for adding, searching, and deleting services
+    function addService() {
+        var name = document.getElementById('newServiceName').value;
+        var description = document.getElementById('newServiceDescription').value;
+        var price = document.getElementById('newServicePrice').value;
+        fetch('/services/add', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({name: name, description: description, price: price})
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Service added:', data);
+                alert('Service added successfully');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error adding service');
+            });
+    }
+
+    function searchAndDeleteService() {
+        var serviceName = document.getElementById('deleteServiceSearch').value;
+        fetch(`/services/search?name=${encodeURIComponent(serviceName)}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                if (data && data.length > 0) {
+                    const serviceId = data[0].id;
+                    if (confirm(`Вы хотите удалить эту услугу?: ${data[0].name}?`)) {
+                        fetch(`/services/delete/${serviceId}`, {
+                            method: 'DELETE'
+                        })
+                            .then(delResponse => {
+                                if (delResponse.ok) {
+                                    console.log('Service deleted');
+                                    alert('Service deleted successfully');
+                                } else {
+                                    console.error('Deletion failed');
+                                    alert('Failed to delete service');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Error deleting service');
+                            });
+                    }
+                } else {
+                    alert('No service found with that name');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+</script>
+</body>
+</html>
